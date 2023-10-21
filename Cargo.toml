@@ -20,8 +20,6 @@ serde_json = "1.0"
 lazy_static = "1.4.0"
 parking_lot = "0.12.1"
 debug_print = "1.0.0"
-openssl = "0.10.57"
-bitbuffer = "0.10.9"
 
 [dependencies.uuid]
 version = "1.5.0"
