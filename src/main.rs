@@ -31,8 +31,8 @@ lazy_static! {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {    
-    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
-    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
+    let cert_file = &mut BufReader::new(File::open("cert.pem")?);
+    let key_file = &mut BufReader::new(File::open("key.pem")?);
 
     let cert = rustls_pemfile::certs(cert_file)?.into_iter().map(Certificate).collect();
     let key = PrivateKey(rustls_pemfile::pkcs8_private_keys(key_file)?.remove(0));
