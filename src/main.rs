@@ -2,6 +2,7 @@
 extern crate lazy_static;
 
 use actix_web::{App, HttpServer, web,self};
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 pub mod endpoints;
 pub mod server_list;
@@ -26,6 +27,12 @@ lazy_static! {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {    
+    
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+
+    builder.set_private_key_file("key.pem", SslFiletype::PEM).unwrap();
+    builder.set_certificate_chain_file("cert.pem").unwrap();
+    
     HttpServer::new(|| {
         App::new()
             .service(
@@ -36,7 +43,7 @@ async fn main() -> std::io::Result<()> {
             )
             
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind_openssl("127.0.0.1:8080",builder)?
     .run()
     .await
 }

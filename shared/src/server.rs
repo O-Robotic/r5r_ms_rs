@@ -9,22 +9,20 @@ pub struct Server {
     pub playlist: String,
     
     #[serde(rename = "maxPlayers")]
-    pub max_players: String,
+    pub max_players: u16,
 
     #[serde(rename = "playerCount")]
-    pub player_count: String,
+    pub player_count: u16,
 
     pub ip: String,
-    pub port: String,
+    pub port: u16,
     pub key: String,
 
-    #[serde(skip_serializing)]
-    pub checksum: String,
+    pub checksum: u32,
 
     #[serde(skip_serializing)]
     pub version: String,
 
-    #[serde(skip_serializing)]
     pub hidden: bool,
 
     #[serde(skip)]
@@ -32,7 +30,14 @@ pub struct Server {
 
     #[serde(skip)]
     pub server_expiry_time: u64,
+    
+    #[serde(skip_serializing)]
+    #[serde(rename = "timeStamp")]
+    pub time_stamp: u64,
 
     #[serde(skip_serializing)]
     pub token: Option<Uuid>,
+
+    #[serde(skip_deserializing)]
+    pub region: String,
 }

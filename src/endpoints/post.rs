@@ -20,7 +20,9 @@ pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpRes
         //Ok == do nothing everything is chill
         Ok(_) => {},
         Err(error) => {
-            return Err(error::ErrorBadRequest(ms_error_format(error)));
+            let str= ms_error_format(error);
+            println!("{}", str);
+            return Err(error::ErrorBadRequest(str));
         } 
     }
 
@@ -29,9 +31,9 @@ pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpRes
         None => SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), 0000),
     };
 
-    sock_adr.set_port(u16::from_str(&server.port).unwrap());
+    sock_adr.set_port(server.port);
 
-    let duration = Duration::from_millis(u64::from(GLOBAL_CONFIG.server_conn_validation_listen_timeout));
+    let duration = Duration::from_secs(u64::from(GLOBAL_CONFIG.server_conn_validation_listen_timeout));
 
     let connection_valid: bool = match wrappers::validate_server_connection(sock_adr, &server.key, duration) {
         Some(val) => val,
