@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use actix_web::{App, HttpServer, web,self};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
+use utils::wrappers;
 
 pub mod endpoints;
 pub mod server_list;
@@ -40,8 +41,7 @@ async fn main() -> std::io::Result<()> {
                 .service(endpoints::list::list_servers)
                 .service(endpoints::list::get_server_by_token)
                 .service(endpoints::post::post)
-            )
-            
+            ).configure(wrappers::red_endpoints)
     })
     .bind_openssl("127.0.0.1:8080",builder)?
     .run()

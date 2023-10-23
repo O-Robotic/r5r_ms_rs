@@ -40,3 +40,12 @@ pub fn validate_server_connection(_: SocketAddr, _: &str, _: Duration) -> Option
 pub fn ms_error_format(str: impl Into<String>) -> String {
     format!("{{\"success\":false,\"reason\":\"{}\" }}", str.into())
 }
+
+#[cfg(feature = "secret_sauce")]
+pub fn red_endpoints(cfg: &mut actix_web::web::ServiceConfig)  {
+    secret_sauce::register_endpoints(cfg);
+} 
+
+#[cfg(not(feature = "secret_sauce"))]
+pub fn red_endpoints(_: &mut actix_web::web::ServiceConfig)  {
+} 
