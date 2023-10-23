@@ -1,8 +1,11 @@
 #[macro_use]
 extern crate lazy_static;
 
+
+use std::fs::File;
+use std::io::BufReader;
 use actix_web::{App, HttpServer, web,self};
-use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
+use rustls::{ServerConfig, Certificate, PrivateKey};
 use utils::wrappers;
 
 pub mod endpoints;
@@ -28,11 +31,19 @@ lazy_static! {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {    
-    
-    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    let cert_file = &mut BufReader::new(File::open("cert.pem").unwrap());
+    let key_file = &mut BufReader::new(File::open("key.pem").unwrap());
 
-    builder.set_private_key_file("key.pem", SslFiletype::PEM).unwrap();
-    builder.set_certificate_chain_file("cert.pem").unwrap();
+    let cert = rustls_pemfile::certs(cert_file)?.into_iter().map(Certificate).collect();
+    let key = PrivateKey(rustls_pemfile::pkcs8_private_keys(key_file)?.remove(0));
+
+    let config = ServerConfig::builder()
+    .with_safe_default_cipher_suites()
+    .with_safe_default_kx_groups()
+    .with_safe_default_protocol_versions()
+    .unwrap()
+    .with_no_client_auth()
+    .with_single_cert(cert, key);
     
     HttpServer::new(|| {
         App::new()
@@ -43,7 +54,7 @@ async fn main() -> std::io::Result<()> {
                 .service(endpoints::post::post)
             ).configure(wrappers::red_endpoints)
     })
-    .bind_openssl("127.0.0.1:8080",builder)?
+    .bind_rustls("127.0.0.1:8080", config.unwrap())?
     .run()
     .await
 }
