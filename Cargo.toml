@@ -12,8 +12,9 @@ edition = "2021"
 #secret_sauce = { path = "../secret_sauce", optional = true }
 
 shared = { path = "shared" }
-openssl = "0.10.57"
-actix-web = { version = "4", features = ["openssl"] }
+actix-web = { version = "4", features = ["rustls"] }
+rustls = "0.20.9"
+rustls-pemfile = "1.0.3"
 futures = "0.3.28"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
