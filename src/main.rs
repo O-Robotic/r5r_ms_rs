@@ -10,7 +10,6 @@ use rustls::{ServerConfig, Certificate, PrivateKey};
 pub mod endpoints;
 pub mod server_list;
 pub mod wrappers;
-pub mod utils;
 
 pub struct MasterServer {
     server_list: server_list::ServerList,

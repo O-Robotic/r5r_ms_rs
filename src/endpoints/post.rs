@@ -5,13 +5,11 @@ use std::{
 
 use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
 
-use crate::{
-    utils::ms_error_format,
-    MASTER_SERVER, wrappers,
-};
+use crate::{ MASTER_SERVER, wrappers};
 
 use shared::ms_config::GLOBAL_CONFIG;
 use shared::server::Server;
+use shared::responces::*;
 
 #[post("/add")]
 pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpResponse, Error> {
@@ -46,8 +44,8 @@ pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpRes
 
     match MASTER_SERVER.server_list.add_server(server.0) {
         Some(token) => {
-            return Ok(HttpResponse::Ok().body(format!("{{\"success\": true, \"token\": \"{}\" }}", token))); },
-        None => { return Ok(HttpResponse::Ok().body("{\"success\": true}")); }
+            return Ok(HttpResponse::Ok().body(ms_token_responce(token))) },
+        None => { return Ok( HttpResponse::Ok().body(ms_success_responce()) ); }
     }
 
 }

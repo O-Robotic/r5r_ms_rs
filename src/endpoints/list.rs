@@ -1,9 +1,10 @@
-use crate::{utils::ms_error_format, MASTER_SERVER};
+use crate::MASTER_SERVER;
 use std::{
     sync::atomic::Ordering,
     time::{SystemTime, UNIX_EPOCH}
 };
 
+use shared::responces::{ms_return_server, ms_error_format};
 use actix_web::{error::{self}, post, Error, HttpResponse, web};
 use debug_print::debug_println;
 use serde::{Serialize, Deserialize};
@@ -86,15 +87,8 @@ pub async fn get_server_by_token(token: web::Json<JsonStruct>) -> Result<HttpRes
 
     let server = match MASTER_SERVER.server_list.get_hidden_server(token.token) {
         Some(server) => server,
-        None => { return Err(error::ErrorNotFound("") );  }
+        None => { return Err(error::ErrorNotFound(ms_error_format("Server not found")));  }
     };
 
-    let ret_str = match serde_json::to_string(&server) {
-        Ok(str) => str,
-        Err(err) => { 
-            println!("Could not serialise server {}", err);
-            return Err( error::ErrorInternalServerError("Unexpected Error")  )    }
-    };
-
-    Ok(HttpResponse::Ok().body( format!("{{ \"success\": true, \"server\": {}  }}", ret_str)))
+    Ok(HttpResponse::Ok().body( ms_return_server(server)))
 }
