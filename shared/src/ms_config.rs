@@ -61,7 +61,7 @@ impl Config {
                 let cfg: Config = Config::default_vals();
 
                 let str: String = serde_json::to_string_pretty(&cfg)
-                    .expect("Failed to serialise config to string");
+                    .expect("Failed to serialize config to string");
 
                 file.write_all(str.as_bytes())
                     .expect("Failed to write json");

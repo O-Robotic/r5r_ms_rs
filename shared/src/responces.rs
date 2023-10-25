@@ -50,7 +50,7 @@ pub fn ms_token_responce(token: Uuid) -> String {
         }
     ) {
         Ok(res) => {res},
-        Err(_) => {ms_error_format("Failed to serialise server token")}
+        Err(_) => {ms_error_format("Failed to serialize server token")}
     }
 }
 
