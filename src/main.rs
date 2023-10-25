@@ -6,10 +6,10 @@ use std::fs::File;
 use std::io::BufReader;
 use actix_web::{App, HttpServer, web,self};
 use rustls::{ServerConfig, Certificate, PrivateKey};
-use utils::wrappers;
 
 pub mod endpoints;
 pub mod server_list;
+pub mod wrappers;
 pub mod utils;
 
 pub struct MasterServer {

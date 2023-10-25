@@ -1,4 +1,4 @@
-use crate::{utils::wrappers::ms_error_format, MASTER_SERVER};
+use crate::{utils::ms_error_format, MASTER_SERVER};
 use std::{
     sync::atomic::Ordering,
     time::{SystemTime, UNIX_EPOCH}

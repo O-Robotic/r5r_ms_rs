@@ -6,8 +6,8 @@ use std::{
 use actix_web::{error, post, web, Error, HttpRequest, HttpResponse};
 
 use crate::{
-    utils::{wrappers::ms_error_format, wrappers},
-    MASTER_SERVER,
+    utils::ms_error_format,
+    MASTER_SERVER, wrappers,
 };
 
 use shared::ms_config::GLOBAL_CONFIG;
