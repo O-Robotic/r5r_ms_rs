@@ -4,7 +4,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH}
 };
 
-use shared::responces::{ms_return_server, ms_error_format};
+use shared::responses::{ms_return_server, ms_error_format};
 use actix_web::{error::{self}, post, Error, HttpResponse, web};
 use debug_print::debug_println;
 use serde::{Serialize, Deserialize};
@@ -12,7 +12,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 #[derive(Serialize)]
-struct ServerResponceJson<'a> {
+struct ServerResponseJson<'a> {
     success: bool,
     servers: &'a serde_json::Value,
 }
@@ -39,7 +39,7 @@ pub async fn list_servers() -> Result<HttpResponse, Error> {
     };
 
     let mut valid_servers = Vec::new();
-    let server_responce_json_array: serde_json::Value;
+    let server_response_json_array: serde_json::Value;
 
     //Scope this to release the read lock as quick as we can
     {
@@ -55,19 +55,19 @@ pub async fn list_servers() -> Result<HttpResponse, Error> {
             }
             valid_servers.push(server);
         }
-        server_responce_json_array = json!(valid_servers);
+        server_response_json_array = json!(valid_servers);
     }
 
-    let responce = ServerResponceJson {
+    let response = ServerResponseJson {
         success: true,
-        servers: &server_responce_json_array,
+        servers: &server_response_json_array,
     };
 
-    let json = match serde_json::to_string(&responce) {
+    let json = match serde_json::to_string(&response) {
         Err(err) => {
             println!("Failed to serialise server list request json {}", err);
             return Err(error::ErrorInternalServerError(ms_error_format(
-                "Failed to build responce json",
+                "Failed to build response json",
             )));
         }
         Ok(json) => {json},

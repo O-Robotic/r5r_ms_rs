@@ -9,7 +9,7 @@ use crate::{ MASTER_SERVER, wrappers};
 
 use shared::ms_config::GLOBAL_CONFIG;
 use shared::server::Server;
-use shared::responces::*;
+use shared::responses::*;
 
 #[post("/add")]
 pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpResponse, Error> {
@@ -44,8 +44,8 @@ pub async fn post(req: HttpRequest, server: web::Json<Server>) -> Result<HttpRes
 
     match MASTER_SERVER.server_list.add_server(server.0) {
         Some(token) => {
-            return Ok(HttpResponse::Ok().body(ms_token_responce(token))) },
-        None => { return Ok( HttpResponse::Ok().body(ms_success_responce()) ); }
+            return Ok(HttpResponse::Ok().body(ms_token_response(token))) },
+        None => { return Ok( HttpResponse::Ok().body(ms_success_response()) ); }
     }
 
 }
