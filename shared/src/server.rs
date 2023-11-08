@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Default, Debug, Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Server {
     pub name: String,
     pub description: Option<String>,
     pub map: String,
     pub playlist: String,
-    
+
     #[serde(rename = "maxPlayers")]
     pub max_players: u16,
 
@@ -30,7 +30,7 @@ pub struct Server {
 
     #[serde(skip)]
     pub server_expiry_time: u64,
-    
+
     #[serde(skip_serializing)]
     #[serde(rename = "timeStamp")]
     pub time_stamp: u64,

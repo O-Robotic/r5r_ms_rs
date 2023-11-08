@@ -1,6 +1,8 @@
+use shared::server::Server;
 use std::net::SocketAddr;
 use std::time::Duration;
-use shared::server::Server;
+
+pub fn init() {}
 
 pub fn validate_server_values(_: &Server) -> Result<bool, String> {
     Ok(true)
@@ -10,5 +12,4 @@ pub fn validate_server_connection(_: SocketAddr, _: &str, _: Duration) -> Option
     Some(true)
 }
 
-pub fn red_endpoints(_: &mut actix_web::web::ServiceConfig)  {
-} 
+pub fn red_endpoints(_: &mut actix_web::web::ServiceConfig) {}

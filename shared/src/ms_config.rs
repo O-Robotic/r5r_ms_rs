@@ -1,16 +1,13 @@
+use once_cell::sync::OnceCell;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs::File;
 use std::io::ErrorKind;
 use std::io::Read;
 use std::io::Write;
-use lazy_static::lazy_static;
-
 const CFG_FILE_PATH: &str = "ms.cfg";
 
-lazy_static! {
-    pub static ref GLOBAL_CONFIG: Config = Config::new();
-}
+pub static GLOBAL_CONFIG: once_cell::sync::OnceCell<Config> = OnceCell::new();
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
@@ -21,9 +18,12 @@ pub struct Config {
     pub server_conn_validation_retry_count: u8,
     pub min_server_name_length: u16,
     pub max_server_name_length: u16,
+    pub max_server_description_length: u16,
     pub allowed_chars: String,
     pub allowed_checksums: Vec<u32>,
     pub server_conn_uid: u64,
+    pub ban_fail_condition: bool,
+    pub postgres_connection_uri: String,
 }
 
 impl Default for Config {
@@ -42,20 +42,25 @@ impl Config {
             server_conn_validation_retry_count: 3,
             min_server_name_length: 3,
             max_server_name_length: 32,
+            max_server_description_length: 256,
             allowed_chars: String::from(
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_ ",
             ),
             allowed_checksums: Vec::new(),
             server_conn_uid: 0,
+            ban_fail_condition: true,
+            postgres_connection_uri: Default::default(),
         }
     }
 
     pub fn new() -> Config {
+        //debug_println!("config init");
+
         let file = File::open(CFG_FILE_PATH);
 
         let mut file = file.unwrap_or_else(|error| {
             if error.kind() == ErrorKind::NotFound {
-                // Create the file, write a default set of vars and die
+                // Create the file, write a default set of var's and die
                 let mut file: File =
                     File::create(CFG_FILE_PATH).expect("Failed to create cfg file");
                 let cfg: Config = Config::default_vals();
@@ -79,4 +84,9 @@ impl Config {
 
         serde_json::from_str(&string).expect("Unable to load config file")
     }
+}
+
+pub fn get_global_config() -> &'static Config {
+    //Not sure why this would ever fail, unless it used wrong so im fine with unwrap here tbh
+    return GLOBAL_CONFIG.get().unwrap();
 }
