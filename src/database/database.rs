@@ -39,7 +39,7 @@ pub async fn init_db_pool() -> Option<Pool<Postgres>> {
 
 pub async fn check_identifier(identifiers: &BanIdentifiers) -> BanInfo {
     if identifiers.id.is_none() && identifiers.ip.is_none() {
-        debug!("No ip or id provided in isBanned Request");
+        debug!("No ip or id provided as an identifier");
         return BanInfo::NotBanned;
     };
 
