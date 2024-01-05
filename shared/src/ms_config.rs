@@ -1,17 +1,18 @@
-use once_cell::sync::OnceCell;
-use serde::Deserialize;
-use serde::Serialize;
-use std::fs::File;
-use std::io::ErrorKind;
-use std::io::Read;
-use std::io::Write;
+use {
+    once_cell::sync::OnceCell,
+    serde::{Deserialize, Serialize},
+    std::{
+        fs::File,
+        io::{ErrorKind, Read, Write},
+    },
+};
+
 const CFG_FILE_PATH: &str = "ms.cfg";
 
 pub static GLOBAL_CONFIG: once_cell::sync::OnceCell<Config> = OnceCell::new();
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Config {
-    pub check_server_name: bool,
     pub validate_server_conn: bool,
     pub server_timeout: u16,
     pub server_conn_validation_listen_timeout: u16,
@@ -21,21 +22,15 @@ pub struct Config {
     pub max_server_description_length: u16,
     pub allowed_chars: String,
     pub allowed_checksums: Vec<u32>,
-    pub server_conn_uid: u64,
+    pub allowed_sdk_versions: Vec<String>,
     pub ban_fail_condition: bool,
     pub postgres_connection_uri: String,
 }
 
+//Creates a blank cfg with default options
 impl Default for Config {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Config {
-    fn default_vals() -> Config {
+    fn default() -> Config {
         Config {
-            check_server_name: true,
             validate_server_conn: false,
             server_timeout: 30,
             server_conn_validation_listen_timeout: 300,
@@ -47,15 +42,15 @@ impl Config {
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_ ",
             ),
             allowed_checksums: Vec::new(),
-            server_conn_uid: 0,
+            allowed_sdk_versions: Vec::new(),
             ban_fail_condition: true,
             postgres_connection_uri: Default::default(),
         }
     }
+}
 
-    pub fn new() -> Config {
-        //debug_println!("config init");
-
+impl Config {
+    pub fn from_file() -> Config {
         let file = File::open(CFG_FILE_PATH);
 
         let mut file = file.unwrap_or_else(|error| {
@@ -63,7 +58,7 @@ impl Config {
                 // Create the file, write a default set of var's and die
                 let mut file: File =
                     File::create(CFG_FILE_PATH).expect("Failed to create cfg file");
-                let cfg: Config = Config::default_vals();
+                let cfg: Config = Config::from_file();
 
                 let str: String = serde_json::to_string_pretty(&cfg)
                     .expect("Failed to serialize config to string");

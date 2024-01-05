@@ -1,3 +1,4 @@
 pub mod bans;
-pub mod list;
-pub mod post;
+pub mod panel;
+pub mod servers;
+pub mod eula;

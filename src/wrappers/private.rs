@@ -1,9 +1,8 @@
-use shared::server::Server;
-use std::net::SocketAddr;
-use std::time::Duration;
-
-use secret_sauce::validation::connection_validator;
-use secret_sauce::validation::values_validator;
+use {
+    secret_sauce::validation::{connection_validator, values_validator},
+    shared::server::Server,
+    std::{net::SocketAddr, time::Duration},
+};
 
 pub fn init() {
     secret_sauce::init();

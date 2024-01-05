@@ -1,17 +1,18 @@
-use crate::get_master_server;
-use std::{
-    sync::atomic::Ordering,
-    time::{Duration, SystemTime, UNIX_EPOCH},
+use {
+    crate::get_master_server,
+    actix_web::{
+        error::{self},
+        post, web, Error, HttpResponse,
+    },
+    serde::{Deserialize, Serialize},
+    serde_json::json,
+    shared::responses::{ms_error_format, ms_return_server},
+    std::{
+        sync::atomic::Ordering,
+        time::{Duration, SystemTime, UNIX_EPOCH},
+    },
+    uuid::Uuid,
 };
-
-use actix_web::{
-    error::{self},
-    post, web, Error, HttpResponse,
-};
-use serde::{Deserialize, Serialize};
-use serde_json::json;
-use shared::responses::{ms_error_format, ms_return_server};
-use uuid::Uuid;
 
 #[derive(Serialize)]
 struct ServerResponseJson<'a> {
@@ -20,14 +21,12 @@ struct ServerResponseJson<'a> {
 }
 
 #[derive(Deserialize)]
-struct JsonStruct {
+pub struct JsonStruct {
     pub token: Uuid,
 }
 
 #[post("")]
-async fn list_servers() -> Result<HttpResponse, Error> {
-    //debug_println!("list called");
-
+pub async fn list_servers() -> Result<HttpResponse, Error> {
     let servers = get_master_server().server_list.get_public_servers();
 
     let time = SystemTime::now()
@@ -43,14 +42,14 @@ async fn list_servers() -> Result<HttpResponse, Error> {
         let servers = servers.read();
 
         for server in servers.iter() {
-            if time != 0 && server.server_expiry_time < time {
+            if time != 0 && server.internal.server_expiry_time < time {
                 get_master_server()
                     .server_list
                     .scrub_needed
                     .store(true, Ordering::Relaxed);
                 continue;
             }
-            valid_servers.push(server);
+            valid_servers.push(&server.server);
         }
         server_response_json_array = json!(valid_servers);
     }
@@ -74,7 +73,7 @@ async fn list_servers() -> Result<HttpResponse, Error> {
 }
 
 #[post("/byToken")]
-async fn get_server_by_token(token: web::Json<JsonStruct>) -> Result<HttpResponse, Error> {
+pub async fn get_server_by_token(token: web::Json<JsonStruct>) -> Result<HttpResponse, Error> {
     /*
         //This is a spelling mistake caused by reading discord while programming, it will remain forever :D
         let tonken = match serde_json::from_slice::<JsonStruct>(&body){
@@ -84,7 +83,7 @@ async fn get_server_by_token(token: web::Json<JsonStruct>) -> Result<HttpRespons
         .server_list
         .get_hidden_server(token.token)
     {
-        Some(server) => server,
+        Some(server) => server.server,
         None => {
             return Err(error::ErrorNotFound(ms_error_format("Server not found")));
         }

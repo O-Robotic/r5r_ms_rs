@@ -1,6 +1,7 @@
-use shared::server::Server;
-use std::net::SocketAddr;
-use std::time::Duration;
+use {
+    shared::server::Server,
+    std::{net::SocketAddr, time::Duration},
+};
 
 pub fn init() {}
 

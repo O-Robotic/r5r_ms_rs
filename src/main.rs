@@ -1,33 +1,40 @@
-use actix_web::{self, web, App, HttpServer};
-use database::init_db_pool;
-use once_cell::sync::OnceCell;
-use rustls::{Certificate, PrivateKey, ServerConfig};
-use shared::ms_config::{Config, GLOBAL_CONFIG};
-use sqlx::Postgres;
-use std::io::BufReader;
-use std::{fs::File, sync::Arc};
-use tracing::Level;
+use {
+    actix_session::{config::PersistentSession, storage::CookieSessionStore, SessionMiddleware},
+    actix_web::{
+        self,
+        cookie::{Key, SameSite},
+        App, HttpServer,
+    },
+    database::init_postgres_pool,
+    once_cell::sync::OnceCell,
+    rustls::{Certificate, PrivateKey, ServerConfig},
+    shared::ms_config::{Config, GLOBAL_CONFIG},
+    sqlx::Postgres,
+    std::{fs::File, io::BufReader, sync::Arc},
+    tracing::Level,
+};
 
 pub mod database;
 pub mod endpoints;
+pub mod middleware;
 pub mod server_list;
 pub mod wrappers;
 
 pub struct MasterServer {
-    db_pool: Option<sqlx::Pool<Postgres>>,
+    postgres_pool: Option<sqlx::Pool<Postgres>>,
     server_list: Arc<server_list::ServerList>,
 }
 
 impl MasterServer {
     pub async fn new() -> MasterServer {
         MasterServer {
-            db_pool: init_db_pool().await,
+            postgres_pool: init_postgres_pool().await,
             server_list: server_list::ServerList::new(),
         }
     }
 }
 
-static MASTER_SERVER: once_cell::sync::OnceCell<MasterServer> = OnceCell::new();
+pub static MASTER_SERVER: once_cell::sync::OnceCell<MasterServer> = OnceCell::new();
 
 pub fn get_master_server() -> &'static MasterServer {
     MASTER_SERVER.get().unwrap()
@@ -35,22 +42,31 @@ pub fn get_master_server() -> &'static MasterServer {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    
+    //Log to file as well at somepoint
     let subscriber = tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
+        .with_max_level(Level::INFO)
         .finish();
 
     tracing::subscriber::set_global_default(subscriber).unwrap();
 
-    GLOBAL_CONFIG.set(Config::new());
-    MASTER_SERVER.set(MasterServer::new().await);
+    //I still hate this
+    if GLOBAL_CONFIG.set(Config::from_file()).is_err() {
+        panic!("Could not create config")
+    }
 
-    let cert_file = &mut BufReader::new(File::open("cert.pem")?);
-    let key_file = &mut BufReader::new(File::open("key.pem")?);
+    if MASTER_SERVER.set(MasterServer::new().await).is_err() {
+        panic!("Could not create masterserver data");
+    }
+
+    let cert_file = &mut BufReader::new(File::open("cert.pem").expect("Could not read cert file"));
+    let key_file = &mut BufReader::new(File::open("key.pem").expect("Could not read key file"));
 
     let cert = rustls_pemfile::certs(cert_file)?
         .into_iter()
         .map(Certificate)
         .collect();
+
     let key = PrivateKey(rustls_pemfile::pkcs8_private_keys(key_file)?.remove(0));
 
     let config = ServerConfig::builder()
@@ -61,24 +77,31 @@ async fn main() -> std::io::Result<()> {
         .with_no_client_auth()
         .with_single_cert(cert, key);
 
+    //This is literally only used for a single thing, is probably a way to do this in lib itself
     wrappers::init();
 
     HttpServer::new(|| {
+        let session_store =
+            SessionMiddleware::builder(CookieSessionStore::default(), Key::generate())
+                .cookie_secure(true)
+                .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
+                .session_lifecycle(
+                    PersistentSession::default()
+                        .session_ttl(actix_web::cookie::time::Duration::minutes(10)),
+                )
+                .cookie_same_site(SameSite::Strict)
+                .build();
+
         App::new()
-            .service(
-                web::scope("/servers")
-                    .service(endpoints::list::list_servers)
-                    .service(endpoints::list::get_server_by_token)
-                    .service(endpoints::post::post),
-            )
-            .service(
-                web::scope("/banlist")
-                    .service(endpoints::bans::is_banned)
-                    .service(endpoints::bans::bulk_check),
-            )
+            .wrap(session_store)
+            .service(endpoints::eula::get_eula)
+            .configure(endpoints::servers::servers_routes)
+            .configure(endpoints::bans::ban_routes)
+            .configure(endpoints::panel::panel_routes)
             .configure(wrappers::red_endpoints)
     })
-    .bind_rustls("127.0.0.1:8080", config.unwrap())?
+    //Maybe allow https to be toggled for testing
+    .bind_rustls_021("127.0.0.1:443", config.unwrap())?
     .run()
     .await
 }
