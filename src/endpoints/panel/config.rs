@@ -17,7 +17,7 @@ pub async fn set_config(json: web::Json<Config>) -> Result<HttpResponse, Error> 
     let mut config = get_global_config();
     config.clone_from(&&json.0);
 
-    Ok(HttpResponse::Ok().body(""))
+    Ok(HttpResponse::Ok().finish())
 }
 
 //WIP
